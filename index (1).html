@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperLocal - Premium Hyperlocal E-commerce</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/lucide@latest">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            color: #1f2937;
+        }
+
+        /* Cart Drawer Animation */
+        .cart-drawer {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+            border-left: 1px solid #e5e7eb;
+        }
+
+        .cart-drawer.active {
+            right: 0;
+        }
+
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 999;
+        }
+
+        .cart-overlay.active {
+            display: block;
+        }
+
+        /* Product Card Hover Effect */
+        .product-card {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Stock Status Badge */
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stock-in {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .stock-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Quantity Selector */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            width: fit-content;
+        }
+
+        .quantity-selector button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            transition: background 0.2s;
+        }
+
+        .quantity-selector button:hover {
+            background: #f3f4f6;
+        }
+
+        .quantity-selector input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            padding: 10px 16px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #0c4a6e;
+            border-left: 4px solid #3b82f6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cart-drawer {
+                width: 100%;
+                right: -100%;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .product-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .cart-drawer {
+                width: 100%;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Badge Animation */
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navigation Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-lg">H</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">HyperLocal</h1>
+            </div>
+            <button id="cartToggle" class="relative p-2 text-gray-700 hover:text-purple-600 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+
+    <!-- Cart Drawer -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+            <h2 class="text-xl font-bold text-gray-900">Shopping Cart</h2>
+            <button id="cartClose" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="cartItems" class="p-6 space-y-4">
+            <p class="text-gray-500 text-center py-8">Your cart is empty</p>
+        </div>
+
+        <div class="border-t border-gray-200 p-6 space-y-4 sticky bottom-0 bg-white">
+            <div class="space-y-2">
+                <div class="flex justify-between text-gray-700">
+                    <span>Subtotal:</span>
+                    <span id="subtotal" class="font-semibold">₹0</span>
+                </div>
+                <div class="flex justify-between text-gray-700">
+                    <span>Delivery Charge:</span>
+                    <span id="delivery" class="font-semibold">₹30</span>
+                </div>
+                <div class="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold text-gray-900">
+                    <span>Total:</span>
+                    <span id="total" class="text-purple-600">₹0</span>
+                </div>
+            </div>
+            <button id="checkoutBtn" class="btn-primary w-full">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Product Section -->
+        <section id="productSection" class="mb-12">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Fresh & Premium Products</h2>
+                
+                <!-- Category Filter -->
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <button class="category-filter px-4 py-2 rounded-full font-semibold transition border-2 active" data-category="all">
+                        All Products
+                    </button>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="productGrid" class="product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Products will be rendered here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Checkout Section (Hidden by default) -->
+        <section id="checkoutSection" class="hidden mb-12">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-8">Complete Your Order</h2>
+
+                <!-- Order Summary -->
+                <div class="bg-purple-50 rounded-lg p-6 mb-8">
+                    <h3 class="font-bold text-gray-900 mb-4">Order Summary</h3>
+                    <div id="checkoutOrderSummary" class="space-y-2 text-sm"></div>
+                    <div class="border-t border-purple-200 mt-4 pt-4">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>Total Amount:</span>
+                            <span id="checkoutTotal" class="text-purple-600">₹0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Form -->
+                <form id="checkoutForm" class="space-y-6">
+                    <div class="form-group">
+                        <label for="customerName">Full Name *</label>
+                        <input type="text" id="customerName" placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerPhone">Phone Number *</label>
+                        <input type="tel" id="customerPhone" placeholder="Enter your 10-digit phone number" pattern="[0-9]{10}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerAddress">Delivery Address *</label>
+                        <textarea id="customerAddress" placeholder="Enter your complete delivery address" rows="4" required style="resize: vertical; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deliveryTime">Preferred Delivery Time Slot *</label>
+                        <select id="deliveryTime" required>
+                            <option value="">Select a time slot</option>
+                            <option value="9:00 AM - 11:00 AM">9:00 AM - 11:00 AM</option>
+                            <option value="11:00 AM - 1:00 PM">11:00 AM - 1:00 PM</option>
+                            <option value="1:00 PM - 3:00 PM">1:00 PM - 3:00 PM</option>
+                            <option value="3:00 PM - 5:00 PM">3:00 PM - 5:00 PM</option>
+                            <option value="5:00 PM - 7:00 PM">5:00 PM - 7:00 PM</option>
+                            <option value="7:00 PM - 9:00 PM">7:00 PM - 9:00 PM</option>
+                        </select>
+                    </div>
+
+                    <div id="formAlert"></div>
+
+                    <div class="flex gap-4">
+                        <button type="button" id="backToCart" class="btn-secondary flex-1">Back to Cart</button>
+                        <button type="button" id="placeOrderBtn" class="btn-primary flex-1">Place Order via WhatsApp</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white mt-16 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-gray-400">&copy; 2024 HyperLocal. All rights reserved. | Premium Hyperlocal E-commerce Solution</p>
+        </div>
+    </footer>
+
+    <!-- Main Application Script -->
+    <script>
+        // ============================================
+        // PRODUCT DATA & CONFIGURATION
+        // ============================================
+
+        const DELIVERY_CHARGE = 30;
+        const WHATSAPP_NUMBER = '919876543210'; // Replace with your WhatsApp Business number (with country code, no +)
+
+        // Comprehensive Product Catalog
+        const products = [
+            // Daily Essentials
+            { id: 'prod001', name: 'Organic Milk 1L', category: 'Daily Essentials', price: 65, stock: 15, image: 'Milk' },
+            { id: 'prod002', name: 'Fresh Bread 400g', category: 'Daily Essentials', price: 45, stock: 8, image: 'Bread' },
+            { id: 'prod003', name: 'Eggs (12 pcs)', category: 'Daily Essentials', price: 75, stock: 12, image: 'Eggs' },
+            { id: 'prod004', name: 'Butter 200g', category: 'Daily Essentials', price: 120, stock: 6, image: 'Butter' },
+            { id: 'prod005', name: 'Yogurt 500ml', category: 'Daily Essentials', price: 55, stock: 10, image: 'Yogurt' },
+
+            // Packaged Foods
+            { id: 'prod006', name: 'Atta (Wheat Flour) 5kg', category: 'Packaged Foods', price: 250, stock: 5, image: 'Atta' },
+            { id: 'prod007', name: 'Rice 2kg', category: 'Packaged Foods', price: 180, stock: 8, image: 'Rice' },
+            { id: 'prod008', name: 'Dal (Lentils) 1kg', category: 'Packaged Foods', price: 140, stock: 7, image: 'Dal' },
+            { id: 'prod009', name: 'Oil 1L', category: 'Packaged Foods', price: 220, stock: 9, image: 'Oil' },
+            { id: 'prod010', name: 'Sugar 1kg', category: 'Packaged Foods', price: 50, stock: 12, image: 'Sugar' },
+
+            // Fresh Items
+            { id: 'prod011', name: 'Tomatoes 1kg', category: 'Fresh Items', price: 40, stock: 20, image: 'Tomatoes' },
+            { id: 'prod012', name: 'Onions 1kg', category: 'Fresh Items', price: 35, stock: 18, image: 'Onions' },
+            { id: 'prod013', name: 'Potatoes 2kg', category: 'Fresh Items', price: 60, stock: 15, image: 'Potatoes' },
+            { id: 'prod014', name: 'Carrots 500g', category: 'Fresh Items', price: 30, stock: 12, image: 'Carrots' },
+            { id: 'prod015', name: 'Spinach 250g', category: 'Fresh Items', price: 25, stock: 10, image: 'Spinach' },
+
+            // Beverages
+            { id: 'prod016', name: 'Tea Leaves 250g', category: 'Beverages', price: 120, stock: 8, image: 'Tea' },
+            { id: 'prod017', name: 'Coffee 200g', category: 'Beverages', price: 180, stock: 6, image: 'Coffee' },
+            { id: 'prod018', name: 'Juice 1L', category: 'Beverages', price: 85, stock: 10, image: 'Juice' },
+            { id: 'prod019', name: 'Water Bottles (6 pack)', category: 'Beverages', price: 60, stock: 14, image: 'Water' },
+            { id: 'prod020', name: 'Milk Powder 400g', category: 'Beverages', price: 95, stock: 9, image: 'Powder' },
+        ];
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+
+        let cart = [];
+        let currentCategory = 'all';
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        /**
+         * Format currency to Indian Rupees format
+         */
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        /**
+         * Show alert/notification to user
+         */
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.getElementById('formAlert');
+            if (alertDiv) {
+                alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+                setTimeout(() => {
+                    alertDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        /**
+         * Get unique categories from products
+         */
+        function getCategories() {
+            const cats = ['all', ...new Set(products.map(p => p.category))];
+            return cats;
+        }
+
+        /**
+         * Filter products by category
+         */
+        function filterProducts(category) {
+            if (category === 'all') {
+                return products;
+            }
+            return products.filter(p => p.category === category);
+        }
+
+        // ============================================
+        // PRODUCT RENDERING
+        // ============================================
+
+        /**
+         * Render category filter buttons
+         */
+        function renderCategoryFilters() {
+            const categories = getCategories();
+            const filterContainer = document.querySelector('.flex.flex-wrap.gap-3');
+            
+            filterContainer.innerHTML = categories.map(cat => {
+                const displayName = cat === 'all' ? 'All Products' : cat;
+                return `
+                    <button class="category-filter px-4 py-2 rounded-full font-semibold transition border-2 ${cat === 'all' ? 'active' : ''}" 
+                            data-category="${cat}">
+                        ${displayName}
+                    </button>
+                `;
+            }).join('');
+
+            // Add event listeners
+            document.querySelectorAll('.category-filter').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.category-filter').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentCategory = e.target.dataset.category;
+                    renderProducts();
+                });
+            });
+        }
+
+        /**
+         * Render product grid
+         */
+        function renderProducts() {
+            const filteredProducts = filterProducts(currentCategory);
+            const grid = document.getElementById('productGrid');
+
+            grid.innerHTML = filteredProducts.map(product => {
+                const isOutOfStock = product.stock === 0;
+                const cartItem = cart.find(item => item.id === product.id);
+                const quantity = cartItem ? cartItem.quantity : 0;
+
+                return `
+                    <div class="product-card">
+                        <div class="product-image">
+                            ${product.image}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-gray-900 mb-2 line-clamp-2">${product.name}</h3>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xl font-bold text-purple-600">${formatCurrency(product.price)}</span>
+                                <span class="stock-badge ${isOutOfStock ? 'stock-out' : 'stock-in'}">
+                                    ${isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                                </span>
+                            </div>
+                            
+                            ${quantity > 0 ? `
+                                <div class="quantity-selector mb-3">
+                                    <button onclick="updateQuantity('${product.id}', ${quantity - 1})" class="minus">−</button>
+                                    <input type="number" value="${quantity}" readonly>
+                                    <button onclick="updateQuantity('${product.id}', ${quantity + 1})" class="plus">+</button>
+                                </div>
+                            ` : `
+                                <button class="btn-primary w-full" onclick="addToCart('${product.id}')" ${isOutOfStock ? 'disabled' : ''}>
+                                    Add to Cart
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // CART MANAGEMENT
+        // ============================================
+
+        /**
+         * Add product to cart
+         */
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) {
+                showAlert('Product not found!', 'error');
+                return;
+            }
+
+            if (product.stock === 0) {
+                showAlert('This item is out of stock!', 'error');
+                return;
+            }
+
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                } else {
+                    showAlert('Cannot add more than available stock!', 'error');
+                    return;
+                }
+            } else {
+                cart.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    stock: product.stock
+                });
+            }
+
+            updateCart();
+            showAlert(`${product.name} added to cart!`, 'success');
+        }
+
+        /**
+         * Update quantity of cart item
+         */
+        function updateQuantity(productId, newQuantity) {
+            const cartItem = cart.find(item => item.id === productId);
+            
+            if (!cartItem) return;
+
+            if (newQuantity <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+
+            if (newQuantity > cartItem.stock) {
+                showAlert('Cannot exceed available stock!', 'error');
+                return;
+            }
+
+            cartItem.quantity = newQuantity;
+            updateCart();
+        }
+
+        /**
+         * Remove item from cart
+         */
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCart();
+            showAlert('Item removed from cart', 'info');
+        }
+
+        /**
+         * Calculate cart summary
+         */
+        function calculateCartSummary() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const delivery = cart.length > 0 ? DELIVERY_CHARGE : 0;
+            const total = subtotal + delivery;
+
+            return { subtotal, delivery, total };
+        }
+
+        /**
+         * Update cart display
+         */
+        function updateCart() {
+            renderProducts();
+            renderCartDrawer();
+            updateCartBadge();
+        }
+
+        /**
+         * Update cart badge count
+         */
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        /**
+         * Render cart drawer content
+         */
+        function renderCartDrawer() {
+            const cartItems = document.getElementById('cartItems');
+            const { subtotal, delivery, total } = calculateCartSummary();
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty</p>';
+                document.getElementById('subtotal').textContent = '₹0';
+                document.getElementById('delivery').textContent = '₹0';
+                document.getElementById('total').textContent = '₹0';
+                return;
+            }
+
+            cartItems.innerHTML = cart.map(item => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">${item.name}</h4>
+                            <p class="text-sm text-gray-600">${formatCurrency(item.price)} each</p>
+                        </div>
+                        <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="quantity-selector">
+                        <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="minus">−</button>
+                        <input type="number" value="${item.quantity}" readonly>
+                        <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="plus">+</button>
+                    </div>
+                    <div class="text-right mt-3 font-semibold text-purple-600">
+                        ${formatCurrency(item.price * item.quantity)}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('delivery').textContent = formatCurrency(delivery);
+            document.getElementById('total').textContent = formatCurrency(total);
+        }
+
+        // ============================================
+        // CHECKOUT & WHATSAPP INTEGRATION
+        // ============================================
+
+        /**
+         * Generate WhatsApp message with order details
+         */
+        function generateWhatsAppMessage() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            const timeSlot = document.getElementById('deliveryTime').value;
+
+            // Validate form
+            if (!name || !phone || !address || !timeSlot) {
+                showAlert('Please fill in all required fields!', 'error');
+                return null;
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                showAlert('Please enter a valid 10-digit phone number!', 'error');
+                return null;
+            }
+
+            if (cart.length === 0) {
+                showAlert('Your cart is empty! Please add items before placing an order.', 'error');
+                return null;
+            }
+
+            const { subtotal, delivery, total } = calculateCartSummary();
+
+            // Build order message
+            let message = '🛍️ *NEW ORDER RECEIVED* 🛍️\n';
+            message += '----------------------------\n';
+            message += '👤 *Customer Details:*\n';
+            message += `Name: ${name}\n`;
+            message += `Phone: ${phone}\n`;
+            message += `Address: ${address}\n`;
+            message += `Time Slot: ${timeSlot}\n`;
+            message += '----------------------------\n';
+            message += '🛒 *Items Ordered:*\n';
+
+            cart.forEach((item, index) => {
+                message += `${index + 1}. ${item.name} x ${item.quantity} - ${formatCurrency(item.price * item.quantity)}\n`;
+            });
+
+            message += '----------------------------\n';
+            message += '💵 *Bill Summary:*\n';
+            message += `Subtotal: ${formatCurrency(subtotal)}\n`;
+            message += `Delivery: ${formatCurrency(delivery)}\n`;
+            message += `*Total Payable: ${formatCurrency(total)}*\n`;
+
+            return message;
+        }
+
+        /**
+         * Place order via WhatsApp
+         */
+        function placeOrder() {
+            const message = generateWhatsAppMessage();
+            
+            if (!message) {
+                return;
+            }
+
+            // Encode message for URL
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedMessage}`;
+
+            // Clear cart and show success
+            cart = [];
+            updateCart();
+            document.getElementById('checkoutForm').reset();
+            
+            // Hide checkout section and show product section
+            document.getElementById('checkoutSection').classList.add('hidden');
+            document.getElementById('productSection').classList.remove('hidden');
+            
+            showAlert('Order placed successfully! Opening WhatsApp...', 'success');
+
+            // Redirect to WhatsApp after a short delay
+            setTimeout(() => {
+                window.open(whatsappUrl, '_blank');
+            }, 500);
+        }
+
+        /**
+         * Render checkout order summary
+         */
+        function renderCheckoutSummary() {
+            const summary = document.getElementById('checkoutOrderSummary');
+            const { subtotal, delivery, total } = calculateCartSummary();
+
+            summary.innerHTML = cart.map(item => `
+                <div class="flex justify-between">
+                    <span>${item.name} x ${item.quantity}</span>
+                    <span class="font-semibold">${formatCurrency(item.price * item.quantity)}</span>
+                </div>
+            `).join('');
+
+            summary.innerHTML += `
+                <div class="border-t border-purple-200 mt-4 pt-4 space-y-2">
+                    <div class="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span class="font-semibold">${formatCurrency(subtotal)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Delivery Charge:</span>
+                        <span class="font-semibold">${formatCurrency(delivery)}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('checkoutTotal').textContent = formatCurrency(total);
+        }
+
+        // ============================================
+        // UI INTERACTIONS
+        // ============================================
+
+        /**
+         * Toggle cart drawer visibility
+         */
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cartDrawer');
+            const overlay = document.getElementById('cartOverlay');
+            
+            drawer.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        /**
+         * Show checkout section
+         */
+        function showCheckout() {
+            if (cart.length === 0) {
+                showAlert('Please add items to your cart before checkout!', 'error');
+                return;
+            }
+
+            renderCheckoutSummary();
+            document.getElementById('productSection').classList.add('hidden');
+            document.getElementById('checkoutSection').classList.remove('hidden');
+            toggleCartDrawer();
+            window.scrollTo(0, 0);
+        }
+
+        /**
+         * Go back to products
+         */
+        function goBackToProducts() {
+            document.getElementById('checkoutSection').classList.add('hidden');
+            document.getElementById('productSection').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial render
+            renderCategoryFilters();
+            renderProducts();
+            renderCartDrawer();
+
+            // Cart drawer events
+            document.getElementById('cartToggle').addEventListener('click', toggleCartDrawer);
+            document.getElementById('cartClose').addEventListener('click', toggleCartDrawer);
+            document.getElementById('cartOverlay').addEventListener('click', toggleCartDrawer);
+
+            // Checkout events
+            document.getElementById('checkoutBtn').addEventListener('click', showCheckout);
+            document.getElementById('backToCart').addEventListener('click', goBackToProducts);
+            document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
+
+            // Prevent form submission
+            document.getElementById('checkoutForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+            });
+        });
+
+        // ============================================
+        // END OF APPLICATION
+        // ============================================
+    </script>
+
+</body>
+</html>
